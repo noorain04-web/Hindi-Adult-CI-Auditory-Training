@@ -81,11 +81,56 @@ function openTask(area,r){area.innerHTML=shell("🎤","सुनें और �
 function choose(b,ok,response,target){if(state.answered)return;$$(".option").forEach(x=>x.classList.remove("correct","incorrect","selected"));b.classList.add("selected",ok?"correct":"incorrect");if(!ok)$$(".option").forEach(x=>{if(x.textContent.trim()===String(target).trim())x.classList.add("correct")});record(ok,response,target)}
 function bindScore(target){$$(".score-actions button").forEach(b=>b.onclick=()=>{if(state.answered)return;$$(".score-actions button").forEach(x=>x.disabled=true);record(b.dataset.score==="1","spoken",target)})}
 function record(ok,response,target){state.answered=true;state.session.push({module:state.module,index:state.index,correct:ok,response,target,presentation:mode(type())});if(ok){state.streak++;let p=10+Math.min(state.streak,5)*2;state.points+=p;feedback(`✓ सही! +${p} points`,"good")}else{state.streak=0;feedback("✗ इस item को फिर से सुनकर अभ्यास करें","bad")}$("#nextBtn").disabled=false;$("#liveScore").textContent=state.points;$("#pointsValue").textContent=state.points;$("#streakValue").textContent=state.streak;$("#streakText").textContent=`🔥 ${state.streak}`;$("#playerTip").textContent="Response recorded — अब Next दबाएँ";stats()}
-function play(){if(!state.sound){toast("Sound is muted");return}let t=type(),r=list()[state.index];stopNoise();if(t==="sound"){envSound(r);return}if(t==="same-different"){speak(r[0],.78,()=>setTimeout(()=>speak(r[1],.78),650));$("#playerTip").textContent="दो sounds सुनें… फिर तुलना करें";return}let text=spoken(r,t);if(t==="noise"&&state.noise!=="off")startNoise(state.noise);speak(text,t==="telephone"?.82:.86)}
+function play(){if(!state.sound){toast("Sound is muted");return}let t=type(),r=list()[state.index];stopNoise();if(t==="sound"){envSound(r);return}if(t==="same-different"){speak(r[0],.78,()=>setTimeout(()=>speak(r[1],.78),650));$("#playerTip").textContent="दो sounds सुनें… फिर तुलना करें";return}let text=spoken(r,t);if(t==="noise"&&state.noise!=="off")startNoise(state.noise);speak(text,t==="telephone"?.68:.68)}
 function spoken(r,t){if(state.module.startsWith("screen-")){let l=state.module.split("-")[1];if(l==="A"||l==="B")return(state.trial||trial(r)).stimulus;if(l==="C")return r.prompt;return r.text||r}if(t==="choice")return(state.trial||trial(r)).stimulus;if(t==="completion")return r.prompt;if(t==="open-sentence"||t==="noise")return r.text;if(t==="generalisation")return generalPrompt(r);return typeof r==="string"?r:r.text}
 function generalPrompt(r){return({"दो-speaker conversation":"आप दो लोगों की बातचीत सुन रहे हैं। मुख्य बात सुनकर अपना जवाब दें।","2–4 m distance":"वक्ता आपसे दो से चार मीटर दूर है। बात सुनकर जवाब दें।","Implanted-side listening":"वक्ता implant वाले side पर है। बात सुनकर अपना जवाब दें।","Competing speech":"दूसरे लोग भी बोल रहे हैं। मुख्य वक्ता की बात सुनकर जवाब दें।","3-person group":"तीन लोगों के समूह में बातचीत हो रही है। अपनी बारी पर उचित जवाब दें।","Self-advocacy":"अगर आपको बात साफ नहीं सुनाई दे रही है, तो अपनी hearing need बताकर clarification माँगें।"}[r]||r)}
-function speak(text,rate=.86,done){if(!state.sound||!text||!("speechSynthesis"in window))return;speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang="hi-IN";u.rate=rate;u.pitch=1;u.volume=1;if(state.voice)u.voice=state.voice;u.onend=()=>{$("#playerTip").textContent="अब response दें";if(done)done()};u.onerror=()=>{$("#playerTip").textContent="Speech playback में समस्या हुई — फिर से सुनाएँ";if(done)done()};speechSynthesis.speak(u)}
-function envSound(label){let c=audio();if(!c)return;let g=c.createGain(),now=c.currentTime;g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(.32,now+.02);g.gain.exponentialRampToValueAtTime(.0001,now+.8);g.connect(c.destination);let k=label.includes("फोन")?"phone":label.includes("दरवाज़े")?"door":label.includes("कुकर")?"cooker":label.includes("हॉर्न")?"horn":"dog";if(k==="door")tone(c,g,740,.24);else if(k==="phone"){tone(c,g,880,.16);setTimeout(()=>tone(c,g,660,.16),210)}else if(k==="cooker")hiss(c,g,.75);else if(k==="horn")tone(c,g,180,.45);else{tone(c,g,260,.12);tone(c,g,190,.12);tone(c,g,300,.11)}$("#playerTip").textContent="Sound चल रही है… अब पहचानें"}
+function speak(text,rate=.68,done){if(!state.sound||!text||!("speechSynthesis"in window))return;speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang="hi-IN";u.rate=Math.max(.55,Math.min(.8,rate));u.pitch=.96;u.volume=1;if(state.voice)u.voice=state.voice;u.onend=()=>{$("#playerTip").textContent="अब response दें";if(done)done()};u.onerror=()=>{$("#playerTip").textContent="Speech playback में समस्या हुई — फिर से सुनाएँ";if(done)done()};speechSynthesis.speak(u)}
+function envSound(label){
+ let c=audio(); if(!c)return;
+ const s=label.includes("फोन")?"phone":label.includes("दरवाज़े")?"door":label.includes("कुकर")?"cooker":label.includes("हॉर्न")?"horn":"dog";
+ $("#playerTip").textContent="Environmental sound चल रही है… ध्यान से सुनें";
+ if(s==="door") doorSound(c);
+ else if(s==="phone") phoneSound(c);
+ else if(s==="cooker") cookerSound(c);
+ else if(s==="horn") hornSound(c);
+ else dogSound(c);
+}
+function gain(c,from,to,start,dur){
+ const g=c.createGain();g.gain.setValueAtTime(.0001,start);g.gain.linearRampToValueAtTime(from,start+.05);g.gain.linearRampToValueAtTime(to,start+dur-.08);g.gain.exponentialRampToValueAtTime(.0001,start+dur);g.connect(c.destination);return g;
+}
+function doorSound(c){
+ const now=c.currentTime;
+ [0,.9,1.8].forEach((d,i)=>{const g=gain(c,.38,.0001,now+d,.58);toneAt(c,g,720,.20,now+d);toneAt(c,g,920,.20,now+d+.24)});
+ setTimeout(()=>$("#playerTip").textContent="Sound खत्म — अब पहचानें",2800);
+}
+function phoneSound(c){
+ const now=c.currentTime;
+ [0,1.05,2.1].forEach(d=>{const g=gain(c,.32,.0001,now+d,.62);toneAt(c,g,880,.18,now+d);toneAt(c,g,660,.18,now+d+.22)});
+ setTimeout(()=>$("#playerTip").textContent="Sound खत्म — अब पहचानें",3000);
+}
+function cookerSound(c){
+ const now=c.currentTime;
+ for(let i=0;i<3;i++){const d=i*1.05;const g=gain(c,.28,.0001,now+d,.72);hissAt(c,g,.62,now+d)}
+ setTimeout(()=>$("#playerTip").textContent="Sound खत्म — अब पहचानें",3300);
+}
+function hornSound(c){
+ const now=c.currentTime;
+ const g=gain(c,.34,.0001,now,.95);toneAt(c,g,190,.78,now);
+ setTimeout(()=>$("#playerTip").textContent="Sound खत्म — अब पहचानें",1200);
+}
+function dogSound(c){
+ const now=c.currentTime;
+ [0,.62,1.24,1.86,2.48].forEach((d,i)=>{const g=gain(c,.30,.0001,now+d,.40);toneAt(c,g,[260,190,300,210,275][i],.28,now+d)});
+ setTimeout(()=>$("#playerTip").textContent="Sound खत्म — अब पहचानें",3300);
+}
+function toneAt(c,g,f,d,start){
+ const o=c.createOscillator();o.type="sine";o.frequency.value=f;o.connect(g);o.start(start);o.stop(start+d);
+}
+function hissAt(c,g,d,start){
+ const b=c.createBuffer(1,Math.floor(c.sampleRate*d),c.sampleRate),x=b.getChannelData(0);
+ for(let i=0;i<x.length;i++)x[i]=(Math.random()*2-1)*(1-i/x.length);
+ const s=c.createBufferSource();s.buffer=b;s.connect(g);s.start(start);
+}
 function tone(c,g,f,d){let o=c.createOscillator();o.type="sine";o.frequency.value=f;o.connect(g);o.start();o.stop(c.currentTime+d)}
 function hiss(c,g,d){let b=c.createBuffer(1,c.sampleRate*d,c.sampleRate),x=b.getChannelData(0);for(let i=0;i<x.length;i++)x[i]=(Math.random()*2-1)*(1-i/x.length);let s=c.createBufferSource();s.buffer=b;s.connect(g);s.start()}
 function audio(){if(!state.ctx)state.ctx=new(window.AudioContext||window.webkitAudioContext)();if(state.ctx.state==="suspended")state.ctx.resume();return state.ctx}
