@@ -17,25 +17,33 @@ async function init(){
  }
 }
 function bind(){
- $(".nav,[data-screen],[data-module]").forEach(b=>b.onclick=()=>b.dataset.screen?(b.dataset.screen==="home"?home():openScreen(b.dataset.screen.split("-")[1])):open(b.dataset.module));
+ const on=(id,ev,fn)=>{const e=$("#"+id);if(e)e.addEventListener(ev,fn)};
+ $$(".nav,[data-screen],[data-module]").forEach(b=>b.onclick=()=>b.dataset.screen?(b.dataset.screen==="home"?home():openScreen(b.dataset.screen.split("-")[1])):open(b.dataset.module));
  const area=$("#taskArea");
  if(area)area.addEventListener("click",e=>{
   const b=e.target.closest(".option");
   if(!b||state.answered)return;
   if(b.dataset.i!==undefined){
-   const t=state.trial;
-   if(t)choose(b,+b.dataset.i===+t.correctIndex,t.options[+b.dataset.i],t.stimulus);
+   const t=state.trial||trial(list()[state.index]);
+   const i=Number(b.dataset.i);
+   choose(b,i===Number(t.correctIndex),t.options[i],t.stimulus);
   }else if(b.dataset.a!==undefined){
    const raw=list()[state.index];
    if(type()==="sound"){
-    const s=[{l:"दरवाज़े की घंटी",k:"doorbell"},{l:"फोन की घंटी",k:"phone"},{l:"प्रेशर कुकर की सीटी",k:"cooker"},{l:"कार का हॉर्न",k:"horn"},{l:"कुत्ते का भौंकना",k:"dog"}],target=s.find(x=>raw.includes(x.l))||s[0];
+    const s=[{l:"दरवाज़े की घंटी",k:"doorbell"},{l:"फोन की घंटी",k:"phone"},{l:"प्रेशर कुकर की सीटी",k:"cooker"},{l:"कार का हॉर्न",k:"horn"},{l:"कुत्ते का भौंकना",k:"dog"}];
+    const target=s.find(x=>raw.includes(x.l))||s[0];
     choose(b,b.dataset.a===target.k,b.textContent.trim(),target.l);
-   }else if(type()==="same-different")choose(b,b.dataset.a===String(raw[2]),b.textContent.trim(),raw[2]?"समान":"अलग");
+   }else if(type()==="same-different"){
+    choose(b,b.dataset.a===String(raw[2]),b.textContent.trim(),raw[2]?"समान":"अलग");
+   }
   }
  });
- $("#soundBtn").onclick=()=>{state.sound=!state.sound;$("#soundBtn").textContent=state.sound?"🔊":"🔇";if(!state.sound)stopNoise();toast(state.sound?"Sound on":"Sound muted")};
- $("#resetBtn").onclick=reset;$("#newSessionBtn").onclick=newSession;$("#repeatSessionBtn").onclick=repeatSession;$("#playBtn").onclick=play;$("#repeatBtn").onclick=play;$("#nextBtn").onclick=next;
- $("#presentationMode").onchange=e=>{state.mode=e.target.value;render()};$("#cueLevel").onchange=e=>cue(e.target.value);$("#noiseLevel").onchange=e=>{state.noise=e.target.value;if(state.noise==="off")stopNoise()};
+ on("soundBtn","click",()=>{state.sound=!state.sound;const e=$("#soundBtn");if(e)e.textContent=state.sound?"🔊":"🔇";if(!state.sound)stopNoise();toast(state.sound?"Sound on":"Sound muted")});
+ on("resetBtn","click",reset);on("newSessionBtn","click",newSession);on("repeatSessionBtn","click",repeatSession);
+ on("playBtn","click",play);on("repeatBtn","click",play);on("nextBtn","click",next);
+ on("presentationMode","change",e=>{state.mode=e.target.value;render()});
+ on("cueLevel","change",e=>cue(e.target.value));
+ on("noiseLevel","change",e=>{state.noise=e.target.value;if(state.noise==="off")stopNoise()});
 }
 function loadVoices(){if(!("speechSynthesis"in window))return;const v=speechSynthesis.getVoices();state.voice=v.find(x=>/^hi[-_]/i.test(x.lang))||v.find(x=>/hindi/i.test(x.name))||null}
 function home(){state.module=null;state.index=0;state.order=[];state.cache={};show("home");stats()}
