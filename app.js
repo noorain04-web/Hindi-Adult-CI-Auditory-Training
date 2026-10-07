@@ -2,7 +2,20 @@ let DATA=null;
 const state={module:null,index:0,order:[],cache:{},trial:null,answered:false,sound:true,mode:"auto",cue:"0",noise:"off",session:[],points:0,streak:0,voice:null,ctx:null,noiseSource:null};
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 
-async function init(){DATA=await fetch("data/training-data.json").then(r=>r.json());bind();loadVoices();if("speechSynthesis"in window)speechSynthesis.onvoiceschanged=loadVoices;home();}
+async function init(){
+ try{
+  bind();
+  const res=await fetch("data/training-data.json",{cache:"no-store"});
+  if(!res.ok)throw new Error("Data load failed: "+res.status);
+  DATA=await res.json();
+  loadVoices();
+  if("speechSynthesis"in window)speechSynthesis.onvoiceschanged=loadVoices;
+  home();
+ }catch(e){
+  console.error("Hindi CI Training init error:",e);
+  document.body.insertAdjacentHTML("afterbegin",'<div id="fatalError" style="position:fixed;z-index:99999;left:10px;right:10px;top:10px;padding:14px;background:#8f2020;color:white;border-radius:10px;font:600 14px Arial">App error: '+esc(e.message)+'</div>');
+ }
+}
 function bind(){
  $(".nav,[data-screen],[data-module]").forEach(b=>b.onclick=()=>b.dataset.screen?(b.dataset.screen==="home"?home():openScreen(b.dataset.screen.split("-")[1])):open(b.dataset.module));
  const area=$("#taskArea");
@@ -82,3 +95,4 @@ let toastTimer;function toast(t){let e=$("#toast");if(!e)return;e.textContent=t;
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 document.addEventListener("DOMContentLoaded",init);
+window.addEventListener("error",e=>console.error("Runtime error:",e.error||e.message));
