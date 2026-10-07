@@ -94,5 +94,35 @@ function feedback(t,c){$("#feedback").textContent=t;$("#feedback").className=`fe
 let toastTimer;function toast(t){let e=$("#toast");if(!e)return;e.textContent=t;e.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove("show"),1800)}
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+
+// Emergency-safe answer click handler.
+// Uses capture phase so no decorative element or child handler can prevent scoring.
+document.addEventListener("click",function(e){
+ const b=e.target.closest && e.target.closest("#taskArea .option");
+ if(!b || state.answered) return;
+ e.preventDefault();
+ e.stopPropagation();
+ const raw=list()[state.index];
+ const t=type();
+ if(b.dataset.i!==undefined){
+   const tr=state.trial || trial(raw);
+   const i=Number(b.dataset.i);
+   choose(b,i===Number(tr.correctIndex),tr.options[i],tr.stimulus);
+   return;
+ }
+ if(b.dataset.a!==undefined){
+   if(t==="same-different"){
+     choose(b,b.dataset.a===String(raw[2]),b.textContent.trim(),raw[2]?"समान":"अलग");
+     return;
+   }
+   if(t==="sound"){
+     const s=[{l:"दरवाज़े की घंटी",k:"doorbell"},{l:"फोन की घंटी",k:"phone"},{l:"प्रेशर कुकर की सीटी",k:"cooker"},{l:"कार का हॉर्न",k:"horn"},{l:"कुत्ते का भौंकना",k:"dog"}];
+     const target=s.find(x=>raw.includes(x.l))||s[0];
+     choose(b,b.dataset.a===target.k,b.textContent.trim(),target.l);
+   }
+ }
+},true);
+
 document.addEventListener("DOMContentLoaded",init);
+
 window.addEventListener("error",e=>console.error("Runtime error:",e.error||e.message));
