@@ -65,5 +65,5 @@ function stats(){let n=state.session.length,c=state.session.filter(x=>x.correct)
 function feedback(t,c){$("#feedback").textContent=t;$("#feedback").className=`feedback ${c}`}
 let toastTimer;function toast(t){let e=$("#toast");if(!e)return;e.textContent=t;e.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove("show"),1800)}
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",""":"&quot;","'":"&#039;"}[m]))}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 document.addEventListener("DOMContentLoaded",init);
