@@ -4,7 +4,22 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 
 async function init(){DATA=await fetch("data/training-data.json").then(r=>r.json());bind();loadVoices();if("speechSynthesis"in window)speechSynthesis.onvoiceschanged=loadVoices;home();}
 function bind(){
- $$(".nav,[data-screen],[data-module]").forEach(b=>b.onclick=()=>b.dataset.screen?(b.dataset.screen==="home"?home():openScreen(b.dataset.screen.split("-")[1])):open(b.dataset.module));
+ $(".nav,[data-screen],[data-module]").forEach(b=>b.onclick=()=>b.dataset.screen?(b.dataset.screen==="home"?home():openScreen(b.dataset.screen.split("-")[1])):open(b.dataset.module));
+ const area=$("#taskArea");
+ if(area)area.addEventListener("click",e=>{
+  const b=e.target.closest(".option");
+  if(!b||state.answered)return;
+  if(b.dataset.i!==undefined){
+   const t=state.trial;
+   if(t)choose(b,+b.dataset.i===+t.correctIndex,t.options[+b.dataset.i],t.stimulus);
+  }else if(b.dataset.a!==undefined){
+   const raw=list()[state.index];
+   if(type()==="sound"){
+    const s=[{l:"दरवाज़े की घंटी",k:"doorbell"},{l:"फोन की घंटी",k:"phone"},{l:"प्रेशर कुकर की सीटी",k:"cooker"},{l:"कार का हॉर्न",k:"horn"},{l:"कुत्ते का भौंकना",k:"dog"}],target=s.find(x=>raw.includes(x.l))||s[0];
+    choose(b,b.dataset.a===target.k,b.textContent.trim(),target.l);
+   }else if(type()==="same-different")choose(b,b.dataset.a===String(raw[2]),b.textContent.trim(),raw[2]?"समान":"अलग");
+  }
+ });
  $("#soundBtn").onclick=()=>{state.sound=!state.sound;$("#soundBtn").textContent=state.sound?"🔊":"🔇";if(!state.sound)stopNoise();toast(state.sound?"Sound on":"Sound muted")};
  $("#resetBtn").onclick=reset;$("#newSessionBtn").onclick=newSession;$("#repeatSessionBtn").onclick=repeatSession;$("#playBtn").onclick=play;$("#repeatBtn").onclick=play;$("#nextBtn").onclick=next;
  $("#presentationMode").onchange=e=>{state.mode=e.target.value;render()};$("#cueLevel").onchange=e=>cue(e.target.value);$("#noiseLevel").onchange=e=>{state.noise=e.target.value;if(state.noise==="off")stopNoise()};
