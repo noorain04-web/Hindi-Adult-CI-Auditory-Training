@@ -1,1 +1,171 @@
-<!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hindi Adult CI Auditory Training</title><link rel="stylesheet" href="styles.css"></head><body><header><div><b>Hindi Adult CI Auditory Training</b><small>Clinical working interface • v1.1</small></div><div><button id="soundBtn">🔊</button><button id="newSessionBtn">New Random Session</button><button id="repeatSessionBtn">Repeat Same Session</button><button id="resetBtn">Reset</button></div></header><div class="layout"><aside><b>Training sequence</b><button class="nav active" data-screen="home">🏠 Home</button><h4>Screening</h4><button class="nav" data-screen="screen-A">A · शब्द</button><button class="nav" data-screen="screen-B">B · वाक्य</button><button class="nav" data-screen="screen-C">C · Completion</button><button class="nav" data-screen="screen-D">D · Open set</button><h4>Section A · Getting Started</h4><button class="nav" data-module="1">1 · Sounds</button><button class="nav" data-module="2">2 · Same/Different</button><button class="nav" data-module="3">3 · Vowels</button><button class="nav" data-module="4">4 · Phonemes</button><button class="nav" data-module="5">5 · Words</button><button class="nav" data-module="6">6 · Sentences</button><h4>Section B · Challenge</h4><button class="nav" data-module="7">7 · Open words</button><button class="nav" data-module="8">8 · Comprehension</button><button class="nav" data-module="9">9 · Conversation</button><button class="nav" data-module="10">10 · Noise</button><button class="nav" data-module="11">11 · Telephone</button><button class="nav" data-module="12">12 · Generalisation</button></aside><main><section id="home" class="screen active"><div class="hero"><span>ADULT COCHLEAR IMPLANT</span><h1>हिंदी घरेलू श्रवण-प्रशिक्षण</h1><p>क्रमबद्ध sequence: screening → phoneme → word → sentence → noise → telephone → functional communication.</p><button class="primary" data-screen="screen-A">Screening शुरू करें</button> <button data-module="1">Module 1</button></div><div class="notice"><b>Clinical note:</b> यह working draft है; validated Hindi normative assessment नहीं है। Difficulty, scoring और cut-offs clinician individualise करें।</div><div class="stats"><div><b id="overallScore">—</b><small>Overall score</small></div><div><b id="completedCount">0</b><small>Items completed</small></div></div></section><section id="training" class="screen"><div class="head"><div><span id="moduleTag"></span><h2 id="moduleTitle"></h2><p id="moduleInstruction"></p></div><div><label class="setting">Mode <select id="presentationMode"><option value="closed">Closed-set: select written option</option><option value="open">Open-set: spoken response</option><option value="auditory">Auditory-only: no visual choices</option></select></label><label class="setting">Cue <select id="cueLevel"><option value="0">No cue</option><option value="1">Repeat</option><option value="2">Visual cue</option><option value="3">Clinician model</option></select></label><span id="progressText"></span><div class="progress"><i id="progressBar"></i></div></div></div><div id="taskArea"></div><div class="controls"><button id="playBtn" class="primary">▶ Stimulus सुनाएँ</button><button id="repeatBtn">↻ Repeat</button><button id="nextBtn" class="primary">Next →</button></div><div id="feedback"></div></section></main></div><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hindi Adult CI Auditory Training</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark">👂</div>
+    <div>
+      <div class="brand-title">हिंदी Adult CI Training</div>
+      <div class="brand-subtitle">सुनें • जवाब दें • प्रगति देखें</div>
+    </div>
+  </div>
+  <div class="top-actions">
+    <div class="mini-stat"><span>⭐</span><b id="pointsValue">0</b><small>points</small></div>
+    <div class="mini-stat"><span>🔥</span><b id="streakValue">0</b><small>streak</small></div>
+    <button id="soundBtn" class="icon-btn" title="Sound">🔊</button>
+    <button id="newSessionBtn" class="ghost-btn">New Session</button>
+    <button id="repeatSessionBtn" class="ghost-btn">Repeat</button>
+    <button id="resetBtn" class="ghost-btn">Reset</button>
+  </div>
+</header>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="side-title">Training path</div>
+    <button class="nav active" data-screen="home"><span>🏠</span> Home</button>
+    <div class="side-label">Screening</div>
+    <button class="nav" data-screen="screen-A"><span>🔎</span> A · शब्द</button>
+    <button class="nav" data-screen="screen-B"><span>🗣️</span> B · वाक्य</button>
+    <button class="nav" data-screen="screen-C"><span>🧩</span> C · Completion</button>
+    <button class="nav" data-screen="screen-D"><span>🎯</span> D · Open set</button>
+    <div class="side-label">Section A · Getting started</div>
+    <button class="nav" data-module="1"><span>🔔</span> 1 · Sounds</button>
+    <button class="nav" data-module="2"><span>↔️</span> 2 · Same / Different</button>
+    <button class="nav" data-module="3"><span>🔤</span> 3 · Vowels</button>
+    <button class="nav" data-module="4"><span>🗣️</span> 4 · Phonemes</button>
+    <button class="nav" data-module="5"><span>💬</span> 5 · Words</button>
+    <button class="nav" data-module="6"><span>📝</span> 6 · Sentences</button>
+    <div class="side-label">Section B · Challenge</div>
+    <button class="nav" data-module="7"><span>🎤</span> 7 · Open words</button>
+    <button class="nav" data-module="8"><span>🧠</span> 8 · Comprehension</button>
+    <button class="nav" data-module="9"><span>💬</span> 9 · Conversation</button>
+    <button class="nav" data-module="10"><span>🌧️</span> 10 · Noise</button>
+    <button class="nav" data-module="11"><span>📞</span> 11 · Telephone</button>
+    <button class="nav" data-module="12"><span>🌐</span> 12 · Generalisation</button>
+    <div class="side-note">Clinical working draft<br>Not a validated Hindi normative assessment.</div>
+  </aside>
+
+  <main class="main">
+    <section id="home" class="screen active">
+      <div class="welcome-card">
+        <div class="welcome-copy">
+          <div class="eyebrow">ADULT COCHLEAR IMPLANT</div>
+          <h1>हिंदी में सुनने का अभ्यास — अब थोड़ा और engaging</h1>
+          <p>छोटे auditory challenges, instant feedback और step-by-step progression के साथ। Listener को हर task में अलग तरह से सुनना, पहचानना या जवाब देना होगा।</p>
+          <div class="welcome-actions">
+            <button class="primary-btn" data-screen="screen-A">▶ Screening शुरू करें</button>
+            <button class="secondary-btn" data-module="1">🔔 Module 1 आज़माएँ</button>
+          </div>
+        </div>
+        <div class="welcome-visual">
+          <div class="ear-orbit">👂</div>
+          <div class="orbit-label label-one">Listen</div>
+          <div class="orbit-label label-two">Respond</div>
+          <div class="orbit-label label-three">Progress</div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="dashboard-card progress-card">
+          <div class="card-heading"><span>📈</span><b>आपकी session progress</b></div>
+          <div class="big-number" id="overallScore">—</div>
+          <div class="muted">overall scored accuracy</div>
+          <div class="progress large"><i id="homeProgressBar"></i></div>
+          <div class="progress-meta"><span id="completedCount">0</span> responses recorded</div>
+        </div>
+        <div class="dashboard-card">
+          <div class="card-heading"><span>🎯</span><b>कैसे अभ्यास करें?</b></div>
+          <ol class="practice-list">
+            <li>पहले <strong>Stimulus सुनाएँ</strong> दबाएँ।</li>
+            <li>Listener को response देने दें।</li>
+            <li>Closed-set में विकल्प चुनें; open-set में clinician score करें।</li>
+            <li>अगले item पर जाने के लिए <strong>Next</strong> दबाएँ।</li>
+          </ol>
+        </div>
+        <div class="dashboard-card clinical-card">
+          <div class="card-heading"><span>🩺</span><b>Clinical note</b></div>
+          <p>यह working clinical interface है; validated Hindi normative assessment नहीं है। Difficulty, scoring और interpretation clinician individualise करें।</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="training" class="screen">
+      <div class="training-top">
+        <div>
+          <div id="moduleTag" class="module-tag">MODULE</div>
+          <h1 id="moduleTitle"></h1>
+          <p id="moduleInstruction"></p>
+        </div>
+        <div class="training-top-right">
+          <div class="session-score"><span>⭐</span><b id="liveScore">0</b><small>points</small></div>
+          <div class="progress-block">
+            <div class="progress-meta"><span id="progressText">1 / 1</span><span id="streakText">🔥 0</span></div>
+            <div class="progress"><i id="progressBar"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-strip">
+        <label>
+          <span>Response mode</span>
+          <select id="presentationMode">
+            <option value="auto">Auto — task-specific</option>
+            <option value="closed">Closed-set — written choices</option>
+            <option value="open">Open-set — spoken response</option>
+            <option value="auditory">Auditory-only — no choices</option>
+          </select>
+        </label>
+        <label>
+          <span>Cue</span>
+          <select id="cueLevel">
+            <option value="0">No cue</option>
+            <option value="1">Repeat</option>
+            <option value="2">Visual cue</option>
+            <option value="3">Clinician model</option>
+          </select>
+        </label>
+        <label id="noiseControlWrap" class="hidden-control">
+          <span>Practice noise</span>
+          <select id="noiseLevel">
+            <option value="off">Off</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="task-card" id="taskCard">
+        <div class="task-topline">
+          <div id="taskBadge" class="task-badge">LISTEN</div>
+          <div id="taskCounter" class="task-counter">1</div>
+        </div>
+        <div id="taskArea"></div>
+        <div id="cueArea"></div>
+      </div>
+
+      <div class="player-bar">
+        <button id="playBtn" class="play-btn"><span>▶</span> Stimulus सुनाएँ</button>
+        <button id="repeatBtn" class="player-btn">↻ फिर सुनें</button>
+        <div class="player-tip" id="playerTip">पहले stimulus सुनें</div>
+        <button id="nextBtn" class="next-btn">Next →</button>
+      </div>
+
+      <div id="feedback" class="feedback"></div>
+    </section>
+  </main>
+</div>
+
+<div id="toast" class="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
