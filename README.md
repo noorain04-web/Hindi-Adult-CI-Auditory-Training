@@ -9,7 +9,9 @@ Home → Screening A–D → Section A (Modules 1–6) → Section B (Modules 7�
 - Data-driven Hindi stimuli.
 - Explicit stimulus/options/correctIndex for closed-set tasks.
 - Auditory-only visual hiding.
-- Browser Hindi speech output (hi-IN).
+- Browser Hindi speech output (hi-IN) with slower, task-specific natural delivery.
+- Real environmental recordings with automatic synthetic fallback.
+- Audio source/licensing documentation in `AUDIO-SOURCES.md`.
 - Session scoring.
 - Responsive layout.
 - GitHub Pages compatible; no build system required.
