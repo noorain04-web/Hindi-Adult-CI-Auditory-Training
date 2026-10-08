@@ -51,7 +51,25 @@ function bind(){
  on("cueLevel","change",e=>cue(e.target.value));
  on("noiseLevel","change",e=>{state.noise=e.target.value;if(state.noise==="off")stopNoise()});
 }
-function loadVoices(){if(!("speechSynthesis"in window))return;const v=speechSynthesis.getVoices();state.voice=v.find(x=>/^hi[-_]/i.test(x.lang))||v.find(x=>/hindi/i.test(x.name))||null}
+function loadVoices(){
+ if(!("speechSynthesis"in window))return;
+ const v=speechSynthesis.getVoices();
+ const hi=v.filter(x=>/^hi(?:[-_]|$)/i.test(x.lang)||/hindi/i.test(x.name));
+ const score=x=>{
+  let s=0,n=(x.name+" "+x.lang).toLowerCase();
+  if(/^hi[-_]in$/i.test(x.lang))s+=40;
+  if(/hi[-_]in/i.test(x.lang))s+=25;
+  if(/google/.test(n))s+=20;
+  if(/microsoft|neural|natural/.test(n))s+=18;
+  if(/female|woman|swara|kalpana|hemant|ravi|lekha/.test(n))s+=4;
+  if(/english|us|uk|australia/.test(n)&&!/^hi/i.test(x.lang))s-=30;
+  if(/compact|espeak|festival/.test(n))s-=25;
+  return s;
+ };
+ hi.sort((a,b)=>score(b)-score(a));
+ state.voice=hi[0]||v.find(x=>/^hi[-_]/i.test(x.lang))||v.find(x=>/hindi/i.test(x.name))||null;
+ state.availableVoices=v;
+}
 function home(){state.module=null;state.index=0;state.order=[];state.cache={};show("home");stats()}
 function show(id){$$(".screen").forEach(x=>x.classList.remove("active"));$("#"+id)?.classList.add("active");$$(".nav").forEach(x=>x.classList.remove("active"));document.querySelector(`[data-screen="${id}"]`)?.classList.add("active")}
 function activate(id){$$(".nav").forEach(x=>x.classList.toggle("active",x.dataset.module===String(id)||x.dataset.screen===String(id)))}
@@ -90,8 +108,28 @@ function record(ok,response,target){state.answered=true;state.session.push({modu
 function play(){if(!state.sound){toast("Sound is muted");return}let t=type(),r=list()[state.index];stopNoise();if(t==="sound"){envSound(r);return}if(t==="same-different"){speak(r[0],.72,()=>setTimeout(()=>speak(r[1],.72),700));$("#playerTip").textContent="दो sounds सुनें… फिर तुलना करें";return}let text=spoken(r,t);if(t==="noise"&&state.noise!=="off")startNoise(state.noise);speakNatural(text,t)}
 function spoken(r,t){if(state.module.startsWith("screen-")){let l=state.module.split("-")[1];if(l==="A"||l==="B")return(state.trial||trial(r)).stimulus;if(l==="C")return r.prompt;return r.text||r}if(t==="choice")return(state.trial||trial(r)).stimulus;if(t==="completion")return r.prompt;if(t==="open-sentence"||t==="noise")return r.text;if(t==="generalisation")return generalPrompt(r);return typeof r==="string"?r:r.text}
 function generalPrompt(r){return({"दो-speaker conversation":"आप दो लोगों की बातचीत सुन रहे हैं। मुख्य बात सुनकर अपना जवाब दें।","2–4 m distance":"वक्ता आपसे दो से चार मीटर दूर है। बात सुनकर जवाब दें।","Implanted-side listening":"वक्ता implant वाले side पर है। बात सुनकर अपना जवाब दें।","Competing speech":"दूसरे लोग भी बोल रहे हैं। मुख्य वक्ता की बात सुनकर जवाब दें।","3-person group":"तीन लोगों के समूह में बातचीत हो रही है। अपनी बारी पर उचित जवाब दें।","Self-advocacy":"अगर आपको बात साफ नहीं सुनाई दे रही है, तो अपनी hearing need बताकर clarification माँगें।"}[r]||r)}
-function speakNatural(text,t,done){const rate=t==="choice"||t==="open"||t==="open-sentence"||t==="noise"?0.72:t==="telephone"?0.70:t==="conversation"||t==="generalisation"?0.78:0.70;speak(text,rate,done)}
-function speak(text,rate=.72,done){if(!state.sound||!text||!("speechSynthesis"in window))return;speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang="hi-IN";u.rate=Math.max(.58,Math.min(.84,rate));u.pitch=.97;u.volume=1;if(state.voice)u.voice=state.voice;u.onend=()=>{$("#playerTip").textContent="अब response दें";if(done)done()};u.onerror=()=>{$("#playerTip").textContent="Speech playback में समस्या हुई — फिर से सुनाएँ";if(done)done()};speechSynthesis.speak(u)}
+function speakNatural(text,t,done){
+ const rate=t==="same-different"?0.72:
+   t==="choice"||t==="open"||t==="open-sentence"||t==="noise"?0.70:
+   t==="telephone"?0.68:
+   t==="conversation"||t==="generalisation"?0.76:0.68;
+ speak(text,rate,done);
+}
+function speak(text,rate=.72,done){
+ if(!state.sound||!text||!("speechSynthesis"in window))return;
+ speechSynthesis.cancel();
+ const clean=String(text).replace(/\\s+/g," ").replace(/\\.\\.\\./g,"…").trim();
+ const u=new SpeechSynthesisUtterance(clean);
+ u.lang=state.voice?.lang||"hi-IN";
+ u.rate=Math.max(.58,Math.min(.84,rate));
+ u.pitch=.98;
+ u.volume=1;
+ if(state.voice)u.voice=state.voice;
+ u.onstart=()=>$("#playerTip").textContent="Stimulus सुनें…";
+ u.onend=()=>{$("#playerTip").textContent="अब response दें";if(done)done()};
+ u.onerror=()=>{$("#playerTip").textContent="Speech playback में समस्या हुई — फिर से सुनाएँ";if(done)done()};
+ speechSynthesis.speak(u);
+}
 function envSound(label){
  const url=AUDIO_ASSETS[label];
  if(url){
