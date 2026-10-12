@@ -54,20 +54,21 @@ function bind(){
 function loadVoices(){
  if(!("speechSynthesis"in window))return;
  const v=speechSynthesis.getVoices();
- const hi=v.filter(x=>/^hi(?:[-_]|$)/i.test(x.lang)||/hindi/i.test(x.name));
+ const hi=v.filter(x=>/^hi(?:[-_]|$)/i.test(x.lang)||/hindi|हिन्दी|हिंदी/i.test(x.name));
  const score=x=>{
   let s=0,n=(x.name+" "+x.lang).toLowerCase();
-  if(/^hi[-_]in$/i.test(x.lang))s+=40;
-  if(/hi[-_]in/i.test(x.lang))s+=25;
-  if(/google/.test(n))s+=20;
-  if(/microsoft|neural|natural/.test(n))s+=18;
-  if(/female|woman|swara|kalpana|hemant|ravi|lekha/.test(n))s+=4;
-  if(/english|us|uk|australia/.test(n)&&!/^hi/i.test(x.lang))s-=30;
-  if(/compact|espeak|festival/.test(n))s-=25;
+  // Prefer Hindi (India) first, then voices with female/neural/natural indicators.
+  if(/^hi[-_]in$/i.test(x.lang))s+=60;
+  else if(/^hi(?:[-_]|$)/i.test(x.lang)||/hindi|हिन्दी|हिंदी/i.test(x.name))s+=35;
+  if(/female|woman|swara|aditi|kalpana|lekha|priya|heera|neerja|ananya/i.test(n))s+=30;
+  if(/neural|natural/i.test(n))s+=12;
+  if(/google/i.test(n))s+=8;
+  if(/male|hemant|ravi/i.test(n))s-=12;
+  if(/compact|espeak|festival/i.test(n))s-=25;
   return s;
  };
  hi.sort((a,b)=>score(b)-score(a));
- state.voice=hi[0]||v.find(x=>/^hi[-_]/i.test(x.lang))||v.find(x=>/hindi/i.test(x.name))||null;
+ state.voice=hi[0]||v.find(x=>/^hi[-_]/i.test(x.lang))||v.find(x=>/hindi|हिन्दी|हिंदी/i.test(x.name))||null;
  state.availableVoices=v;
 }
 function home(){state.module=null;state.index=0;state.order=[];state.cache={};show("home");stats()}
@@ -109,20 +110,22 @@ function play(){if(!state.sound){toast("Sound is muted");return}let t=type(),r=l
 function spoken(r,t){if(state.module.startsWith("screen-")){let l=state.module.split("-")[1];if(l==="A"||l==="B")return(state.trial||trial(r)).stimulus;if(l==="C")return r.prompt;return r.text||r}if(t==="choice")return(state.trial||trial(r)).stimulus;if(t==="completion")return r.prompt;if(t==="open-sentence"||t==="noise")return r.text;if(t==="generalisation")return generalPrompt(r);return typeof r==="string"?r:r.text}
 function generalPrompt(r){return({"दो-speaker conversation":"आप दो लोगों की बातचीत सुन रहे हैं। मुख्य बात सुनकर अपना जवाब दें।","2–4 m distance":"वक्ता आपसे दो से चार मीटर दूर है। बात सुनकर जवाब दें।","Implanted-side listening":"वक्ता implant वाले side पर है। बात सुनकर अपना जवाब दें।","Competing speech":"दूसरे लोग भी बोल रहे हैं। मुख्य वक्ता की बात सुनकर जवाब दें।","3-person group":"तीन लोगों के समूह में बातचीत हो रही है। अपनी बारी पर उचित जवाब दें।","Self-advocacy":"अगर आपको बात साफ नहीं सुनाई दे रही है, तो अपनी hearing need बताकर clarification माँगें।"}[r]||r)}
 function speakNatural(text,t,done){
- const rate=t==="same-different"?0.72:
-   t==="choice"||t==="open"||t==="open-sentence"||t==="noise"?0.70:
-   t==="telephone"?0.68:
-   t==="conversation"||t==="generalisation"?0.76:0.68;
+ // A careful, slightly slower Hindi presentation; browser voices remain device-dependent.
+ const rate=t==="same-different"?0.78:
+   t==="choice"||t==="open"||t==="open-sentence"||t==="noise"?0.76:
+   t==="telephone"?0.74:
+   t==="conversation"||t==="generalisation"?0.80:0.74;
  speak(text,rate,done);
 }
-function speak(text,rate=.72,done){
+function speak(text,rate=.76,done){
  if(!state.sound||!text||!("speechSynthesis"in window))return;
  speechSynthesis.cancel();
- const clean=String(text).replace(/\\s+/g," ").replace(/\\.\\.\\./g,"…").trim();
+ // Preserve the stimulus wording; only tidy whitespace and punctuation spacing.
+ const clean=String(text).normalize("NFC").replace(/\\s+/g," ").replace(/\\.\\.\\./g,"…").replace(/\\s+([,।!?;:])/g,"$1").trim();
  const u=new SpeechSynthesisUtterance(clean);
  u.lang=state.voice?.lang||"hi-IN";
- u.rate=Math.max(.58,Math.min(.84,rate));
- u.pitch=.98;
+ u.rate=Math.max(.68,Math.min(.86,rate));
+ u.pitch=1.04;
  u.volume=1;
  if(state.voice)u.voice=state.voice;
  u.onstart=()=>$("#playerTip").textContent="Stimulus सुनें…";
