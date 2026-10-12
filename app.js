@@ -110,22 +110,21 @@ function play(){if(!state.sound){toast("Sound is muted");return}let t=type(),r=l
 function spoken(r,t){if(state.module.startsWith("screen-")){let l=state.module.split("-")[1];if(l==="A"||l==="B")return(state.trial||trial(r)).stimulus;if(l==="C")return r.prompt;return r.text||r}if(t==="choice")return(state.trial||trial(r)).stimulus;if(t==="completion")return r.prompt;if(t==="open-sentence"||t==="noise")return r.text;if(t==="generalisation")return generalPrompt(r);return typeof r==="string"?r:r.text}
 function generalPrompt(r){return({"दो-speaker conversation":"आप दो लोगों की बातचीत सुन रहे हैं। मुख्य बात सुनकर अपना जवाब दें।","2–4 m distance":"वक्ता आपसे दो से चार मीटर दूर है। बात सुनकर जवाब दें।","Implanted-side listening":"वक्ता implant वाले side पर है। बात सुनकर अपना जवाब दें।","Competing speech":"दूसरे लोग भी बोल रहे हैं। मुख्य वक्ता की बात सुनकर जवाब दें।","3-person group":"तीन लोगों के समूह में बातचीत हो रही है। अपनी बारी पर उचित जवाब दें।","Self-advocacy":"अगर आपको बात साफ नहीं सुनाई दे रही है, तो अपनी hearing need बताकर clarification माँगें।"}[r]||r)}
 function speakNatural(text,t,done){
- // A careful, slightly slower Hindi presentation; browser voices remain device-dependent.
- const rate=t==="same-different"?0.78:
-   t==="choice"||t==="open"||t==="open-sentence"||t==="noise"?0.76:
-   t==="telephone"?0.74:
-   t==="conversation"||t==="generalisation"?0.80:0.74;
+ // Slower, conversational pacing. Exact timing and voice character depend on the device's Hindi TTS engine.
+ const rate=t==="same-different"?0.70:
+   t==="choice"||t==="open"||t==="open-sentence"||t==="noise"?0.68:
+   t==="telephone"?0.68:
+   t==="conversation"||t==="generalisation"?0.72:0.68;
  speak(text,rate,done);
 }
-function speak(text,rate=.76,done){
+function speak(text,rate=.68,done){
  if(!state.sound||!text||!("speechSynthesis"in window))return;
  speechSynthesis.cancel();
- // Preserve the stimulus wording; only tidy whitespace and punctuation spacing.
  const clean=String(text).normalize("NFC").replace(/\\s+/g," ").replace(/\\.\\.\\./g,"…").replace(/\\s+([,।!?;:])/g,"$1").trim();
  const u=new SpeechSynthesisUtterance(clean);
  u.lang=state.voice?.lang||"hi-IN";
- u.rate=Math.max(.68,Math.min(.86,rate));
- u.pitch=1.04;
+ u.rate=Math.max(.60,Math.min(.76,rate));
+ u.pitch=1.00;
  u.volume=1;
  if(state.voice)u.voice=state.voice;
  u.onstart=()=>$("#playerTip").textContent="Stimulus सुनें…";
