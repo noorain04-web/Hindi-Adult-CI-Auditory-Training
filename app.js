@@ -11,7 +11,7 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 async function init(){
  try{
   bind();
-  const res=await fetch("data/training-data.json",{cache:"no-store"});
+  const res=await fetch("data/training-data.json?v=20261012-1",{cache:"no-store"});
   if(!res.ok)throw new Error("Data load failed: "+res.status);
   DATA=await res.json();
   loadVoices();
